@@ -24,7 +24,7 @@ fi
 
 function finish {
   sleep 1
-  echo "\nPulling file..."
+  echo "Pulling file..."
   adb -s $device pull $filename
   adb -s $device shell rm $filename
 
@@ -37,7 +37,7 @@ function finish {
   echo "Done!"
 }
 
-trap finish EXIT
+trap finish SIGINT
 
-echo "Recording $filename... Press Ctrl + C to end the recording"
+printf "Recording $filename...\nPress Ctrl + C to end the recording\n"
 adb -s $device shell screenrecord $filename
