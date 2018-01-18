@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
-filename="/sdcard/recordings/$timestamp.mp4"
+filename="/sdcard/$timestamp.mp4"
 
 function finish {
   sleep 1
