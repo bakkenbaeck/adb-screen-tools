@@ -9,7 +9,7 @@ margin=50
 text_margin=25
 offset_x="$margin"
 screenshots=()
-  
+
 i="0"
 
 function finish {
@@ -29,6 +29,23 @@ pushd "$tmpdir"
 while true
 do
 
+  if [ -z $1 ]; then
+    devices=($(adb devices | sed -rn 's/^(.+)\sdevice$/\1 /p'))
+    echo "Available devices:"
+    for d in "${!devices[@]}"; do
+      echo "$d. ${devices[$d]}"
+    done
+    printf "Select device by number: "
+    read selected
+    device="${devices[selected]}"
+    if [ -z $device ]; then
+        echo "Could not find a device"
+        exit 1
+    fi
+  else
+      device=$1
+  fi
+
   printf "\nPress Ctrl+C when you are done capturing screenshots.\n"
   printf "Optional caption [Enter]: "
           
@@ -37,11 +54,11 @@ do
   filename="$timestamp--$i.png"
   remote_filename="/sdcard/$filename"
 
-  adb shell screencap -p $remote_filename
+  adb -s $device shell screencap -p $remote_filename
 
   sleep 1
-  adb pull $remote_filename
-  adb shell rm $remote_filename
+  adb -s $device pull $remote_filename
+  adb -s $device shell rm $remote_filename
 
   convert $filename -resize 720x1080 \
           -gravity south -splice 0x200 $filename
