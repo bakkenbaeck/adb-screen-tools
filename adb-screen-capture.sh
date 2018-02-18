@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 workdir=$(pwd)
-tmpdir=$(mktemp -d -p "$workdir")
+tmpdir=$(mktemp -d)
 timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
 
 margin=50
@@ -18,7 +18,7 @@ function finish {
 
   popd
   
-  mv "$tmpdir/$timestamp.png" $workdir
+  mv "$tmpdir/$timestamp.png" .
   rm -rf "$tmpdir"
 }
 
