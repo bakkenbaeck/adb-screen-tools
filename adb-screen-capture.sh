@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 # -*- coding: utf-8 -*-
 
-: ${DIALOG_OK=0}
-: ${DIALOG_CANCEL=1}
-: ${DIALOG_ESC=255}
-
 workdir=$(pwd)
 tmpdir=$(mktemp -d)
 timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
@@ -15,24 +11,18 @@ offset_x="$margin"
 screenshots=()
 
 i="0"
-devices=($(adb devices | grep '^.\+\sdevice$' | head -1 | cut -f 1))
-for d in "${!devices[@]}"; do
-  options+=("$d" "${devices[$d]}")
-done
 
 function finish {
-  if [ $i -gt 0 ]; then
-    convert -size $(printf '%sx1280' "$offset_x") xc:white -gravity NorthWest \
-            "${screenshots[@]}" "$timestamp.png"
+  convert -size $(printf '%sx1280' "$offset_x") xc:white -gravity NorthWest \
+          "${screenshots[@]}" "$timestamp.png"
 
-    popd
-    
-    mv "$tmpdir/$timestamp.png" .
-    rm -rf "$tmpdir"
-  fi
+  popd
+  
+  mv "$tmpdir/$timestamp.png" .
+  rm -rf "$tmpdir"
 }
 
-trap "finish" SIGHUP SIGINT SIGTERM
+trap finish EXIT
 
 pushd "$tmpdir"
 
@@ -40,29 +30,14 @@ while true
 do
 
   if [ -z $1 ]; then
-  
-    tempfile=`tempfile 2>/dev/null` || tempfile=/tmp/selected-device$$
-    trap "rm -f $tempfile" 0 1 2 5 15
-
-    dialog --backtitle "adb-screen-capture" \
-              --title "Select source" \
-              --cancel-label "Done" \
-              --ok-label "Select" \
-              --menu "Available devices" \
-              12 "$(($(tput cols)/2))" "${#options[@]}" \
-              "${options[@]}" 2> $tempfile
-                        
-    case $? in
-      $DIALOG_OK)
-        selected=`cat $tempfile`
-        device="${devices[selected]}";;
-      $DIALOG_CANCEL)
-        finish
-        exit 0;;
-      $DIALOG_ESC)
-        exit 1;;
-    esac
-    
+    devices=($(adb devices | sed -rn 's/^(.+)\sdevice$/\1 /p'))
+    echo "Available devices:"
+    for d in "${!devices[@]}"; do
+      echo "$d. ${devices[$d]}"
+    done
+    printf "Select device by number: "
+    read selected
+    device="${devices[selected]}"
     if [ -z $device ]; then
         echo "Could not find a device"
         exit 1
@@ -71,25 +46,11 @@ do
       device=$1
   fi
 
-  tempfile=`tempfile 2>/dev/null` || tempfile=/tmp/caption$$
-  trap "rm -f $tempfile" 0 1 2 5 15
+  printf "\nPress Ctrl+C when you are done capturing screenshots.\n"
+  printf "Optional caption [Enter]: "
+          
+  read caption
 
-  dialog --backtitle "adb-screen-capture" \
-          --title "Screenshot Caption" \
-          --cancel-label "Skip" \
-          --ok-label "Save" \
-          --inputbox "Enter caption" \
-          12 "$(($(tput cols)/2))" 2> $tempfile
-         
-  case $? in
-    $DIALOG_OK)
-      caption=`cat $tempfile`;;
-    $DIALOG_CANCEL)
-      caption="";;
-    $DIALOG_ESC)
-      exit 1;;
-  esac
-     
   filename="$timestamp--$i.png"
   remote_filename="/sdcard/$filename"
 
