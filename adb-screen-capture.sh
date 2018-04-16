@@ -15,7 +15,7 @@ offset_x="$margin"
 screenshots=()
 
 i="0"
-devices=($(adb devices | sed -rn 's/^(.+)\sdevice$/\1 /p'))
+devices=($(adb devices | grep '^.\+\sdevice$' | head -1 | cut -f 1))
 for d in "${!devices[@]}"; do
   options+=("$d" "${devices[$d]}")
 done
