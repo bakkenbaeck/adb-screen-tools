@@ -5,6 +5,24 @@
 : ${DIALOG_CANCEL=1}
 : ${DIALOG_ESC=255}
 
+while [[ $# -gt 0 ]]
+do
+  key="$1"
+  case $key in
+    -c|--clipboard)
+    if [ -z `command -v xclip` ]; then
+      echo "Warning: You need xclip to copy image to clipboard."
+    else
+      COPY_TO_CLIPBOARD=true
+    fi
+    shift
+    ;;
+    *)
+    shift
+    ;;
+  esac
+done
+
 workdir=$(pwd)
 tmpdir=$(mktemp -d)
 timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
@@ -26,8 +44,13 @@ function finish {
             "${screenshots[@]}" "$timestamp.png"
 
     popd
-    
-    mv "$tmpdir/$timestamp.png" .
+
+    if [ $COPY_TO_CLIPBOARD ]; then
+      echo "Copying image to clipboard"
+      xclip -selection clipboard -t image/png -i "$tmpdir/$timestamp.png"
+    else
+      mv "$tmpdir/$timestamp.png" .
+    fi
     rm -rf "$tmpdir"
   fi
 }
